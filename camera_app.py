@@ -2,7 +2,8 @@ import sys
 import os
 from datetime import datetime
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout,
-                            QPushButton, QLabel, QFileDialog)
+                            QPushButton, QLabel, QFileDialog, QHBoxLayout,
+                            QSlider, QGroupBox)
 from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtGui import QImage, QPixmap
 from picamera2 import Picamera2
@@ -14,7 +15,7 @@ class CameraApp(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("라즈베리파이 카메라 앱")
-        self.setGeometry(100, 100, 800, 600)
+        self.setGeometry(100, 100, 1000, 800)
 
         # 카메라 초기화
         self.picam2 = Picamera2()
@@ -27,17 +28,36 @@ class CameraApp(QMainWindow):
         # 중앙 위젯과 레이아웃 생성
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
-        layout = QVBoxLayout(central_widget)
+        main_layout = QVBoxLayout(central_widget)
 
         # 카메라 미리보기 레이블 생성
         self.camera_label = QLabel()
         self.camera_label.setAlignment(Qt.AlignCenter)
-        layout.addWidget(self.camera_label)
+        main_layout.addWidget(self.camera_label)
 
-        # 버튼 생성
+        # 컨트롤 그룹 생성
+        control_group = QGroupBox("카메라 제어")
+        control_layout = QHBoxLayout()
+
+        # 촛점 조절 슬라이더
+        focus_layout = QVBoxLayout()
+        self.focus_label = QLabel("촛점 조절")
+        self.focus_slider = QSlider(Qt.Horizontal)
+        self.focus_slider.setMinimum(0)
+        self.focus_slider.setMaximum(100)
+        self.focus_slider.setValue(50)
+        self.focus_slider.valueChanged.connect(self.adjust_focus)
+        focus_layout.addWidget(self.focus_label)
+        focus_layout.addWidget(self.focus_slider)
+        control_layout.addLayout(focus_layout)
+
+        # 이미지 캡처 버튼
         self.capture_button = QPushButton("이미지 캡처")
         self.capture_button.clicked.connect(self.capture_image)
-        layout.addWidget(self.capture_button)
+        control_layout.addWidget(self.capture_button)
+
+        control_group.setLayout(control_layout)
+        main_layout.addWidget(control_group)
 
         # 카메라 미리보기를 위한 타이머 설정
         self.timer = QTimer()
@@ -48,6 +68,13 @@ class CameraApp(QMainWindow):
         self.save_dir = "captured_images"
         if not os.path.exists(self.save_dir):
             os.makedirs(self.save_dir)
+
+    def adjust_focus(self):
+        focus_value = self.focus_slider.value()
+        # 촛점 값 범위를 0-255로 변환
+        focus_value = int((focus_value / 100) * 255)
+        # 카메라 촛점 설정
+        self.picam2.set_controls({"AfMode": 1, "LensPosition": focus_value})
 
     def update_frame(self):
         frame = self.picam2.capture_array()
@@ -63,10 +90,19 @@ class CameraApp(QMainWindow):
     def capture_image(self):
         frame = self.picam2.capture_array()
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        filename = f"이미지_{timestamp}.jpg"
-        filepath = os.path.join(self.save_dir, filename)
-        cv2.imwrite(filepath, frame)
-        print(f"이미지 저장됨: {filepath}")
+        default_filename = f"이미지_{timestamp}.jpg"
+        
+        # 파일 저장 다이얼로그 표시
+        filepath, _ = QFileDialog.getSaveFileName(
+            self,
+            "이미지 저장",
+            os.path.join(self.save_dir, default_filename),
+            "JPEG 이미지 (*.jpg);;모든 파일 (*.*)"
+        )
+        
+        if filepath:
+            cv2.imwrite(filepath, frame)
+            print(f"이미지 저장됨: {filepath}")
 
 def main():
     # 플랫폼 플러그인 설정
