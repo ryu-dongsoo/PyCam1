@@ -15,12 +15,17 @@ class CameraApp(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("라즈베리파이 카메라 앱")
-        self.setGeometry(100, 100, 1000, 800)
+        
+        # 전체 화면 설정
+        self.showFullScreen()
+        
+        # ESC 키로 전체 화면 종료 설정
+        self.setWindowFlags(Qt.Window | Qt.FramelessWindowHint)
 
         # 카메라 초기화
         self.picam2 = Picamera2()
         self.preview_config = self.picam2.create_preview_configuration(
-            main={"size": (640, 480)}
+            main={"size": (1920, 1080)}  # 해상도를 1080p로 설정
         )
         self.picam2.configure(self.preview_config)
         self.picam2.start()
@@ -41,13 +46,54 @@ class CameraApp(QMainWindow):
 
         # 자동 촛점 버튼
         self.auto_focus_button = QPushButton("자동 촛점 조절")
+        self.auto_focus_button.setStyleSheet("""
+            QPushButton {
+                background-color: #4CAF50;
+                color: white;
+                padding: 10px;
+                font-size: 14px;
+                border-radius: 5px;
+            }
+            QPushButton:hover {
+                background-color: #45a049;
+            }
+        """)
         self.auto_focus_button.clicked.connect(self.auto_focus)
         control_layout.addWidget(self.auto_focus_button)
 
         # 이미지 캡처 버튼
         self.capture_button = QPushButton("이미지 캡처")
+        self.capture_button.setStyleSheet("""
+            QPushButton {
+                background-color: #2196F3;
+                color: white;
+                padding: 10px;
+                font-size: 14px;
+                border-radius: 5px;
+            }
+            QPushButton:hover {
+                background-color: #1976D2;
+            }
+        """)
         self.capture_button.clicked.connect(self.capture_image)
         control_layout.addWidget(self.capture_button)
+
+        # 종료 버튼 추가
+        self.exit_button = QPushButton("종료")
+        self.exit_button.setStyleSheet("""
+            QPushButton {
+                background-color: #f44336;
+                color: white;
+                padding: 10px;
+                font-size: 14px;
+                border-radius: 5px;
+            }
+            QPushButton:hover {
+                background-color: #d32f2f;
+            }
+        """)
+        self.exit_button.clicked.connect(self.close)
+        control_layout.addWidget(self.exit_button)
 
         control_group.setLayout(control_layout)
         main_layout.addWidget(control_group)
@@ -61,6 +107,11 @@ class CameraApp(QMainWindow):
         self.save_dir = "captured_images"
         if not os.path.exists(self.save_dir):
             os.makedirs(self.save_dir)
+
+    def keyPressEvent(self, event):
+        # ESC 키를 누르면 전체 화면 종료
+        if event.key() == Qt.Key_Escape:
+            self.close()
 
     def auto_focus(self):
         # 자동 촛점 모드 설정
