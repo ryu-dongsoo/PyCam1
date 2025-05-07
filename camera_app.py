@@ -99,7 +99,7 @@ class CameraApp(QMainWindow):
 
 def main():
     # 플랫폼 플러그인 설정
-    os.environ["QT_QPA_PLATFORM"] = "xcb"  # X11 디스플레이 서버 사용
+    os.environ["QT_QPA_PLATFORM"] = "eglfs"  # EGLFS 디스플레이 서버 사용
     
     app = QApplication(sys.argv)
     window = CameraApp()
