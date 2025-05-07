@@ -13,10 +13,10 @@ import numpy as np
 class CameraApp(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Raspberry Pi Camera App")
+        self.setWindowTitle("라즈베리파이 카메라 앱")
         self.setGeometry(100, 100, 800, 600)
 
-        # Initialize camera
+        # 카메라 초기화
         self.picam2 = Picamera2()
         self.preview_config = self.picam2.create_preview_configuration(
             main={"size": (640, 480)}
@@ -24,27 +24,27 @@ class CameraApp(QMainWindow):
         self.picam2.configure(self.preview_config)
         self.picam2.start()
 
-        # Create central widget and layout
+        # 중앙 위젯과 레이아웃 생성
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
         layout = QVBoxLayout(central_widget)
 
-        # Create camera preview label
+        # 카메라 미리보기 레이블 생성
         self.camera_label = QLabel()
         self.camera_label.setAlignment(Qt.AlignCenter)
         layout.addWidget(self.camera_label)
 
-        # Create buttons
-        self.capture_button = QPushButton("Capture Image")
+        # 버튼 생성
+        self.capture_button = QPushButton("이미지 캡처")
         self.capture_button.clicked.connect(self.capture_image)
         layout.addWidget(self.capture_button)
 
-        # Setup timer for camera preview
+        # 카메라 미리보기를 위한 타이머 설정
         self.timer = QTimer()
         self.timer.timeout.connect(self.update_frame)
-        self.timer.start(30)  # Update every 30ms
+        self.timer.start(30)  # 30ms마다 업데이트
 
-        # Create save directory if it doesn't exist
+        # 저장 디렉토리 생성
         self.save_dir = "captured_images"
         if not os.path.exists(self.save_dir):
             os.makedirs(self.save_dir)
@@ -63,10 +63,10 @@ class CameraApp(QMainWindow):
     def capture_image(self):
         frame = self.picam2.capture_array()
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        filename = f"image_{timestamp}.jpg"
+        filename = f"이미지_{timestamp}.jpg"
         filepath = os.path.join(self.save_dir, filename)
         cv2.imwrite(filepath, frame)
-        print(f"Image saved: {filepath}")
+        print(f"이미지 저장됨: {filepath}")
 
 def main():
     app = QApplication(sys.argv)
