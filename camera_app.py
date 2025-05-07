@@ -3,8 +3,8 @@ import os
 from datetime import datetime
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout,
                             QPushButton, QLabel, QFileDialog, QHBoxLayout,
-                            QGroupBox, QSpacerItem, QSizePolicy)
-from PyQt5.QtCore import Qt, QTimer
+                            QGroupBox, QSpacerItem, QSizePolicy, QDesktopWidget)
+from PyQt5.QtCore import Qt, QTimer, QSize
 from PyQt5.QtGui import QImage, QPixmap, QFont
 from picamera2 import Picamera2
 from picamera2.previews import QtGlPreview
@@ -15,7 +15,21 @@ class CameraApp(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("라즈베리파이 카메라 앱")
-        self.setGeometry(100, 100, 1000, 800)
+        
+        # 화면 크기의 절반으로 설정
+        screen = QDesktopWidget().screenGeometry()
+        self.setGeometry(
+            screen.width() // 4,  # 화면 가로 중앙
+            screen.height() // 4,  # 화면 세로 중앙
+            screen.width() // 2,   # 화면 가로의 절반
+            screen.height() // 2   # 화면 세로의 절반
+        )
+        
+        # 최소 크기 설정 (비율 유지)
+        self.setMinimumSize(640, 480)
+        
+        # 크기 조절 정책 설정
+        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
         # 카메라 초기화
         self.picam2 = Picamera2()
@@ -42,6 +56,9 @@ class CameraApp(QMainWindow):
                 padding: 10px;
             }
         """)
+        # 카메라 레이블의 크기 정책 설정
+        self.camera_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.camera_label.setMinimumSize(640, 480)  # 최소 크기 설정
         main_layout.addWidget(self.camera_label)
 
         # 컨트롤 그룹 생성
@@ -119,6 +136,12 @@ class CameraApp(QMainWindow):
         if not os.path.exists(self.save_dir):
             os.makedirs(self.save_dir)
 
+    def resizeEvent(self, event):
+        # 창 크기가 변경될 때 비율 유지
+        super().resizeEvent(event)
+        # 카메라 레이블의 크기를 창 크기에 맞게 조정
+        self.update_frame()
+
     def auto_focus(self):
         # 자동 촛점 모드 설정
         self.picam2.set_controls({"AfMode": 2})  # 2는 연속 자동 촛점 모드
@@ -132,8 +155,13 @@ class CameraApp(QMainWindow):
         h, w, ch = frame.shape
         bytes_per_line = ch * w
         qt_image = QImage(frame.data, w, h, bytes_per_line, QImage.Format_RGB888)
+        
+        # 레이블의 크기에 맞게 이미지 크기 조정 (비율 유지)
+        label_size = self.camera_label.size()
         scaled_pixmap = QPixmap.fromImage(qt_image).scaled(
-            self.camera_label.size(), Qt.KeepAspectRatio, Qt.SmoothTransformation
+            label_size,
+            Qt.KeepAspectRatio,
+            Qt.SmoothTransformation
         )
         self.camera_label.setPixmap(scaled_pixmap)
 
