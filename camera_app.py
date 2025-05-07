@@ -49,6 +49,11 @@ class CameraApp(QMainWindow):
         self.capture_button.clicked.connect(self.capture_image)
         control_layout.addWidget(self.capture_button)
 
+        # 종료 버튼 추가
+        self.exit_button = QPushButton("종료")
+        self.exit_button.clicked.connect(self.close)
+        control_layout.addWidget(self.exit_button)
+
         control_group.setLayout(control_layout)
         main_layout.addWidget(control_group)
 
