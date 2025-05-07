@@ -3,9 +3,9 @@ import os
 from datetime import datetime
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout,
                             QPushButton, QLabel, QFileDialog, QHBoxLayout,
-                            QGroupBox)
+                            QGroupBox, QSpacerItem, QSizePolicy)
 from PyQt5.QtCore import Qt, QTimer
-from PyQt5.QtGui import QImage, QPixmap
+from PyQt5.QtGui import QImage, QPixmap, QFont
 from picamera2 import Picamera2
 from picamera2.previews import QtGlPreview
 import cv2
@@ -29,28 +29,80 @@ class CameraApp(QMainWindow):
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
         main_layout = QVBoxLayout(central_widget)
+        main_layout.setSpacing(20)  # 위젯 간 간격 설정
+        main_layout.setContentsMargins(20, 20, 20, 20)  # 여백 설정
 
         # 카메라 미리보기 레이블 생성
         self.camera_label = QLabel()
         self.camera_label.setAlignment(Qt.AlignCenter)
+        self.camera_label.setStyleSheet("""
+            QLabel {
+                background-color: #2c3e50;
+                border-radius: 10px;
+                padding: 10px;
+            }
+        """)
         main_layout.addWidget(self.camera_label)
 
         # 컨트롤 그룹 생성
         control_group = QGroupBox("카메라 제어")
+        control_group.setStyleSheet("""
+            QGroupBox {
+                font-size: 14px;
+                font-weight: bold;
+                border: 2px solid #34495e;
+                border-radius: 8px;
+                margin-top: 1em;
+                padding-top: 10px;
+            }
+            QGroupBox::title {
+                subcontrol-origin: margin;
+                left: 10px;
+                padding: 0 5px;
+            }
+        """)
         control_layout = QHBoxLayout()
+        control_layout.setSpacing(15)  # 버튼 간 간격 설정
+
+        # 버튼 스타일 정의
+        button_style = """
+            QPushButton {
+                background-color: #3498db;
+                color: white;
+                border: none;
+                padding: 12px 20px;
+                font-size: 14px;
+                font-weight: bold;
+                border-radius: 6px;
+                min-width: 120px;
+            }
+            QPushButton:hover {
+                background-color: #2980b9;
+            }
+            QPushButton:pressed {
+                background-color: #2472a4;
+            }
+        """
 
         # 자동 촛점 버튼
         self.auto_focus_button = QPushButton("자동 촛점 조절")
+        self.auto_focus_button.setStyleSheet(button_style.replace("#3498db", "#2ecc71")
+                                           .replace("#2980b9", "#27ae60")
+                                           .replace("#2472a4", "#219a52"))
         self.auto_focus_button.clicked.connect(self.auto_focus)
         control_layout.addWidget(self.auto_focus_button)
 
         # 이미지 캡처 버튼
         self.capture_button = QPushButton("이미지 캡처")
+        self.capture_button.setStyleSheet(button_style)
         self.capture_button.clicked.connect(self.capture_image)
         control_layout.addWidget(self.capture_button)
 
-        # 종료 버튼 추가
+        # 종료 버튼
         self.exit_button = QPushButton("종료")
+        self.exit_button.setStyleSheet(button_style.replace("#3498db", "#e74c3c")
+                                     .replace("#2980b9", "#c0392b")
+                                     .replace("#2472a4", "#a93226"))
         self.exit_button.clicked.connect(self.close)
         control_layout.addWidget(self.exit_button)
 
