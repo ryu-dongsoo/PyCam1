@@ -3,7 +3,7 @@ import os
 from datetime import datetime
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout,
                             QPushButton, QLabel, QFileDialog, QHBoxLayout,
-                            QSlider, QGroupBox)
+                            QGroupBox)
 from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtGui import QImage, QPixmap
 from picamera2 import Picamera2
@@ -39,17 +39,10 @@ class CameraApp(QMainWindow):
         control_group = QGroupBox("카메라 제어")
         control_layout = QHBoxLayout()
 
-        # 촛점 조절 슬라이더
-        focus_layout = QVBoxLayout()
-        self.focus_label = QLabel("촛점 조절")
-        self.focus_slider = QSlider(Qt.Horizontal)
-        self.focus_slider.setMinimum(0)
-        self.focus_slider.setMaximum(100)
-        self.focus_slider.setValue(50)
-        self.focus_slider.valueChanged.connect(self.adjust_focus)
-        focus_layout.addWidget(self.focus_label)
-        focus_layout.addWidget(self.focus_slider)
-        control_layout.addLayout(focus_layout)
+        # 자동 촛점 버튼
+        self.auto_focus_button = QPushButton("자동 촛점 조절")
+        self.auto_focus_button.clicked.connect(self.auto_focus)
+        control_layout.addWidget(self.auto_focus_button)
 
         # 이미지 캡처 버튼
         self.capture_button = QPushButton("이미지 캡처")
@@ -69,12 +62,12 @@ class CameraApp(QMainWindow):
         if not os.path.exists(self.save_dir):
             os.makedirs(self.save_dir)
 
-    def adjust_focus(self):
-        focus_value = self.focus_slider.value()
-        # 촛점 값 범위를 0-255로 변환
-        focus_value = int((focus_value / 100) * 255)
-        # 카메라 촛점 설정
-        self.picam2.set_controls({"AfMode": 1, "LensPosition": focus_value})
+    def auto_focus(self):
+        # 자동 촛점 모드 설정
+        self.picam2.set_controls({"AfMode": 2})  # 2는 연속 자동 촛점 모드
+        # 촛점 조절 시작
+        self.picam2.autofocus_cycle()
+        print("자동 촛점 조절 중...")
 
     def update_frame(self):
         frame = self.picam2.capture_array()
