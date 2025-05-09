@@ -3,9 +3,9 @@ import os
 from datetime import datetime
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout,
                             QPushButton, QLabel, QFileDialog, QHBoxLayout,
-                            QGroupBox)
-from PyQt5.QtCore import Qt, QTimer
-from PyQt5.QtGui import QImage, QPixmap
+                            QGroupBox, QSpacerItem, QSizePolicy, QDesktopWidget)
+from PyQt5.QtCore import Qt, QTimer, QSize
+from PyQt5.QtGui import QImage, QPixmap, QFont
 from picamera2 import Picamera2
 from picamera2.previews import QtGlPreview
 import cv2
@@ -16,16 +16,25 @@ class CameraApp(QMainWindow):
         super().__init__()
         self.setWindowTitle("라즈베리파이 카메라 앱")
         
-        # 전체 화면 설정
-        self.showFullScreen()
+        # 화면 크기의 절반으로 설정
+        screen = QDesktopWidget().screenGeometry()
+        self.setGeometry(
+            screen.width() // 4,  # 화면 가로 중앙
+            screen.height() // 4,  # 화면 세로 중앙
+            screen.width() // 2,   # 화면 가로의 절반
+            screen.height() // 2   # 화면 세로의 절반
+        )
         
-        # ESC 키로 전체 화면 종료 설정
-        self.setWindowFlags(Qt.Window | Qt.FramelessWindowHint)
+        # 최소 크기 설정 (비율 유지)
+        self.setMinimumSize(640, 480)
+        
+        # 크기 조절 정책 설정
+        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
         # 카메라 초기화
         self.picam2 = Picamera2()
         self.preview_config = self.picam2.create_preview_configuration(
-            main={"size": (1920, 1080)}  # 해상도를 1080p로 설정
+            main={"size": (640, 480)}
         )
         self.picam2.configure(self.preview_config)
         self.picam2.start()
@@ -34,64 +43,83 @@ class CameraApp(QMainWindow):
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
         main_layout = QVBoxLayout(central_widget)
+        main_layout.setSpacing(20)  # 위젯 간 간격 설정
+        main_layout.setContentsMargins(20, 20, 20, 20)  # 여백 설정
 
         # 카메라 미리보기 레이블 생성
         self.camera_label = QLabel()
         self.camera_label.setAlignment(Qt.AlignCenter)
+        self.camera_label.setStyleSheet("""
+            QLabel {
+                background-color: #2c3e50;
+                border-radius: 10px;
+                padding: 10px;
+            }
+        """)
+        # 카메라 레이블의 크기 정책 설정
+        self.camera_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.camera_label.setMinimumSize(640, 480)  # 최소 크기 설정
         main_layout.addWidget(self.camera_label)
 
         # 컨트롤 그룹 생성
         control_group = QGroupBox("카메라 제어")
+        control_group.setStyleSheet("""
+            QGroupBox {
+                font-size: 14px;
+                font-weight: bold;
+                border: 2px solid #34495e;
+                border-radius: 8px;
+                margin-top: 1em;
+                padding-top: 10px;
+            }
+            QGroupBox::title {
+                subcontrol-origin: margin;
+                left: 10px;
+                padding: 0 5px;
+            }
+        """)
         control_layout = QHBoxLayout()
+        control_layout.setSpacing(15)  # 버튼 간 간격 설정
+
+        # 버튼 스타일 정의
+        button_style = """
+            QPushButton {
+                background-color: #3498db;
+                color: white;
+                border: none;
+                padding: 12px 20px;
+                font-size: 14px;
+                font-weight: bold;
+                border-radius: 6px;
+                min-width: 120px;
+            }
+            QPushButton:hover {
+                background-color: #2980b9;
+            }
+            QPushButton:pressed {
+                background-color: #2472a4;
+            }
+        """
 
         # 자동 촛점 버튼
         self.auto_focus_button = QPushButton("자동 촛점 조절")
-        self.auto_focus_button.setStyleSheet("""
-            QPushButton {
-                background-color: #4CAF50;
-                color: white;
-                padding: 10px;
-                font-size: 14px;
-                border-radius: 5px;
-            }
-            QPushButton:hover {
-                background-color: #45a049;
-            }
-        """)
+        self.auto_focus_button.setStyleSheet(button_style.replace("#3498db", "#2ecc71")
+                                           .replace("#2980b9", "#27ae60")
+                                           .replace("#2472a4", "#219a52"))
         self.auto_focus_button.clicked.connect(self.auto_focus)
         control_layout.addWidget(self.auto_focus_button)
 
         # 이미지 캡처 버튼
         self.capture_button = QPushButton("이미지 캡처")
-        self.capture_button.setStyleSheet("""
-            QPushButton {
-                background-color: #2196F3;
-                color: white;
-                padding: 10px;
-                font-size: 14px;
-                border-radius: 5px;
-            }
-            QPushButton:hover {
-                background-color: #1976D2;
-            }
-        """)
+        self.capture_button.setStyleSheet(button_style)
         self.capture_button.clicked.connect(self.capture_image)
         control_layout.addWidget(self.capture_button)
 
-        # 종료 버튼 추가
+        # 종료 버튼
         self.exit_button = QPushButton("종료")
-        self.exit_button.setStyleSheet("""
-            QPushButton {
-                background-color: #f44336;
-                color: white;
-                padding: 10px;
-                font-size: 14px;
-                border-radius: 5px;
-            }
-            QPushButton:hover {
-                background-color: #d32f2f;
-            }
-        """)
+        self.exit_button.setStyleSheet(button_style.replace("#3498db", "#e74c3c")
+                                     .replace("#2980b9", "#c0392b")
+                                     .replace("#2472a4", "#a93226"))
         self.exit_button.clicked.connect(self.close)
         control_layout.addWidget(self.exit_button)
 
@@ -108,10 +136,11 @@ class CameraApp(QMainWindow):
         if not os.path.exists(self.save_dir):
             os.makedirs(self.save_dir)
 
-    def keyPressEvent(self, event):
-        # ESC 키를 누르면 전체 화면 종료
-        if event.key() == Qt.Key_Escape:
-            self.close()
+    def resizeEvent(self, event):
+        # 창 크기가 변경될 때 비율 유지
+        super().resizeEvent(event)
+        # 카메라 레이블의 크기를 창 크기에 맞게 조정
+        self.update_frame()
 
     def auto_focus(self):
         # 자동 촛점 모드 설정
@@ -126,8 +155,13 @@ class CameraApp(QMainWindow):
         h, w, ch = frame.shape
         bytes_per_line = ch * w
         qt_image = QImage(frame.data, w, h, bytes_per_line, QImage.Format_RGB888)
+        
+        # 레이블의 크기에 맞게 이미지 크기 조정 (비율 유지)
+        label_size = self.camera_label.size()
         scaled_pixmap = QPixmap.fromImage(qt_image).scaled(
-            self.camera_label.size(), Qt.KeepAspectRatio, Qt.SmoothTransformation
+            label_size,
+            Qt.KeepAspectRatio,
+            Qt.SmoothTransformation
         )
         self.camera_label.setPixmap(scaled_pixmap)
 
