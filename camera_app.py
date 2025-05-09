@@ -183,10 +183,6 @@ class CameraApp(QMainWindow):
             print(f"이미지 저장됨: {filepath}")
 
 def main():
-    # 로컬 디스플레이를 위한 환경 설정
-    os.environ["DISPLAY"] = ":0"  # 로컬 디스플레이 설정
-    os.environ["QT_QPA_PLATFORM"] = "xcb"  # X11 디스플레이 서버 사용
-    
     app = QApplication(sys.argv)
     window = CameraApp()
     window.show()
