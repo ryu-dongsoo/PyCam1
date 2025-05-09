@@ -16,15 +16,6 @@ class CameraApp(QMainWindow):
         super().__init__()
         self.setWindowTitle("라즈베리파이 카메라 앱")
         
-        # 화면 크기의 절반으로 설정
-        screen = QDesktopWidget().screenGeometry()
-        self.setGeometry(
-            screen.width() // 4,  # 화면 가로 중앙
-            screen.height() // 4,  # 화면 세로 중앙
-            screen.width() // 2,   # 화면 가로의 절반
-            screen.height() // 2   # 화면 세로의 절반
-        )
-        
         # 최소 크기 설정 (비율 유지)
         self.setMinimumSize(640, 480)
         
@@ -183,12 +174,18 @@ class CameraApp(QMainWindow):
             print(f"이미지 저장됨: {filepath}")
 
 def main():
-    # 로컬 디스플레이를 위한 환경 설정
-    os.environ["DISPLAY"] = ":0"  # 로컬 디스플레이 설정
-    os.environ["QT_QPA_PLATFORM"] = "xcb"  # X11 디스플레이 서버 사용
-    
     app = QApplication(sys.argv)
     window = CameraApp()
+    
+    # 화면 크기의 60%로 설정
+    screen = QDesktopWidget().screenGeometry()
+    window.setGeometry(
+        screen.width() // 4,  # 화면 가로 중앙
+        screen.height() // 4,  # 화면 세로 중앙
+        int(screen.width() * 0.6),   # 화면 가로의 60%
+        int(screen.height() * 0.6)   # 화면 세로의 60%
+    )
+    
     window.show()
     sys.exit(app.exec_())
 
